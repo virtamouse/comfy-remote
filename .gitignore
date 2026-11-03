@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+# per-install files (your own sections and folder list)
+templates.json
+folders.json

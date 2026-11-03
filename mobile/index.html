@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#161616">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Comfy Remote">
+<title>Comfy Remote</title>
+<style>
+:root {
+  --bg: #161616; --panel: #212121; --panel-2: #2a2a2a; --line: #353535;
+  --text: #e8e8e8; --muted: #9a9a9a; --accent: #4c9aff; --accent-ink: #fff;
+  --ok: #4caf50; --warn: #e0a030; --err: #ef5350; --tile: rgba(76,154,255,.35);
+  --radius: 12px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+header { position: sticky; top: 0; z-index: 20; background: var(--bg); padding: calc(10px + env(safe-area-inset-top)) 16px 0; border-bottom: 1px solid var(--line); }
+.top { display: flex; align-items: center; gap: 10px; }
+.top h1 { font-size: 17px; margin: 0; flex: 1; letter-spacing: .02em; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--err); display: inline-block; }
+.dot.on { background: var(--ok); }
+#queueInfo { font-size: 12px; color: var(--muted); }
+.tabs { display: flex; margin-top: 10px; }
+.tabs button { flex: 1; background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; padding: 10px 2px 12px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button.active { color: var(--text); border-bottom-color: var(--accent); }
+main { padding: 12px 16px; max-width: 720px; margin: 0 auto; }
+section.tab { display: none; flex-direction: column; gap: 12px; }
+section.tab.active { display: flex; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+textarea, input[type=number], input[type=text] { width: 100%; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: inherit; }
+textarea { min-height: 110px; resize: vertical; }
+textarea.small { min-height: 60px; }
+details > summary { cursor: pointer; color: var(--muted); font-size: 13px; padding: 4px 0; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row + .row { margin-top: 10px; }
+.grow { flex: 1; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.switch { position: relative; width: 48px; height: 28px; flex: none; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch span { position: absolute; inset: 0; background: #444; border-radius: 28px; transition: .2s; }
+.switch span::before { content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::before { transform: translateX(20px); }
+.sizes .grp { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 4px; }
+.sizes .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+.size { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 2px 4px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text); font: 11px system-ui, sans-serif; }
+.size .box { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+.size .r { background: var(--tile); border: 1px solid var(--accent); border-radius: 2px; }
+.size.sel { border-color: var(--ok); background: rgba(76,175,80,.18); }
+.size.sel .r { background: rgba(76,175,80,.55); border-color: var(--ok); }
+.custom { display: none; gap: 8px; margin-top: 8px; }
+.custom.show { display: flex; }
+.stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.stepper button { width: 44px; height: 40px; background: var(--panel-2); color: var(--text); border: 0; font-size: 20px; }
+.stepper output { width: 44px; text-align: center; font-weight: 600; }
+.btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; font: inherit; font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: none; }
+.btn:disabled { opacity: .5; }
+.picked { display: flex; gap: 12px; align-items: center; }
+.picked img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; background: var(--panel-2); flex: none; }
+.picked .name { font-size: 13px; word-break: break-all; color: var(--muted); }
+.genbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: rgba(22,22,22,.94); border-top: 1px solid var(--line); backdrop-filter: blur(8px); }
+.genbar .genrow { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; }
+.genbar .genrow > .btn { flex: 1; padding: 14px; font-size: 16px; }
+.genbar .stepper { flex: none; }
+.genbar .stepper button { height: 50px; width: 40px; }
+.genbar .stepper output { width: 36px; }
+body.nogen { padding-bottom: env(safe-area-inset-bottom); }
+body.nogen .genbar { display: none; }
+.jobs { display: flex; flex-direction: column; gap: 10px; }
+.job .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; }
+.job .state { color: var(--muted); }
+.job.done .state { color: var(--ok); } .job.error .state { color: var(--err); }
+.bar { height: 6px; background: var(--panel-2); border-radius: 6px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.thumbs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+.thumbs figure { margin: 0; position: relative; }
+.thumbs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--panel-2); display: block; }
+.thumbs figcaption { position: absolute; left: 6px; bottom: 6px; font-size: 10px; background: rgba(0,0,0,.6); padding: 1px 6px; border-radius: 4px; }
+.used { font-size: 13px; color: var(--muted); white-space: pre-wrap; margin-top: 6px; max-height: 200px; overflow: auto; }
+.empty { text-align: center; color: var(--muted); font-size: 14px; padding: 24px 8px; }
+.sheet { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6); display: none; }
+.sheet.open { display: block; }
+.sheet .panel { position: absolute; left: 0; right: 0; bottom: 0; top: 8%; background: var(--panel); border-radius: 16px 16px 0 0; display: flex; flex-direction: column; }
+.sheet .bar2 { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.seg { display: flex; background: var(--panel-2); border-radius: 8px; padding: 3px; flex: 1; }
+.seg button { flex: 1; background: none; border: 0; color: var(--muted); padding: 7px 0; border-radius: 6px; font: inherit; font-weight: 600; }
+.seg button.active { background: var(--accent); color: #fff; }
+.sheet .body { overflow: auto; padding: 10px 12px calc(16px + env(safe-area-inset-bottom)); flex: 1; }
+.pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.pick img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--panel-2); display: block; }
+.viewer { position: fixed; inset: 0; z-index: 50; background: #000; display: none; flex-direction: column; }
+.viewer.open { display: flex; }
+.viewer .vimg { flex: 1; min-height: 0; position: relative; display: flex; }
+.viewer .vimg img { flex: 1; min-width: 0; object-fit: contain; width: 100%; height: 100%; }
+.viewer .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 64px; border: 0; border-radius: 8px; background: rgba(0,0,0,.35); color: #fff; font-size: 30px; line-height: 1; padding: 0; }
+.viewer .nav.prev { left: 6px; } .viewer .nav.next { right: 6px; }
+.viewer .nav[hidden] { display: none; }
+.viewer .count { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.55); color: #fff; font-size: 12px; padding: 2px 10px; border-radius: 12px; }
+.viewer .count:empty { display: none; }
+.viewer .vside { display: flex; flex-direction: column; }
+.viewer .vinfo { padding: 8px 16px 0; max-height: 34vh; overflow: auto; }
+.viewer .vinfo .used { max-height: none; color: var(--text); }
+.viewer .vbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+.viewer .vbar .btn { text-align: center; text-decoration: none; padding: 10px 4px; font-size: 13px; }
+.viewer .vbar .btn.on { color: #ffc940; border-color: #ffc940; }
+.acts { display: flex; gap: 8px; margin-top: 8px; }
+.acts .btn { flex: 1; padding: 8px; font-size: 13px; }
+.gimg { position: relative; }
+.gimg .star { position: absolute; right: 4px; top: 2px; color: #ffc940; font-size: 16px; text-shadow: 0 0 3px #000; display: none; }
+.gimg.fav .star { display: block; }
+.favs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.favs .fv img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--panel-2); display: block; }
+.favs .fv p { margin: 4px 2px 0; font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; background: #333; color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+.col { display: flex; flex-direction: column; gap: 12px; }
+
+/* ---------- PC / wide screens: settings left, results right ---------- */
+@media (min-width: 1000px) {
+  header > * { max-width: 1368px; margin-left: auto; margin-right: auto; }
+  .tabs button { flex: none; padding: 10px 22px 12px; font-size: 15px; }
+  main { max-width: 1400px; }
+  section.tab.gen.active { display: grid; grid-template-columns: 440px 1fr; gap: 16px; align-items: start; }
+  body { padding-bottom: 16px; }
+  .col.side > .genbar { position: sticky; bottom: 0; padding: 10px 0 14px; background: var(--bg); border-top: 0; backdrop-filter: none; }
+  .toast { bottom: 24px; }
+  .pick { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+  .favs { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  .thumbs { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .sheet .panel { left: 50%; right: auto; width: 760px; transform: translateX(-50%); top: 6%; bottom: 6%; border-radius: 16px; }
+  .sheet .pick { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .viewer { flex-direction: row; }
+  .viewer .vside { width: 380px; flex: none; background: var(--panel); border-left: 1px solid var(--line); }
+  .viewer .vinfo { flex: 1; max-height: none; padding-top: 16px; }
+  .viewer .vbar { grid-template-columns: repeat(2, 1fr); }
+  .viewer .nav { width: 48px; height: 80px; }
+  .viewer .nav:hover { background: rgba(255,255,255,.15); }
+}
+.lora { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.lora:first-of-type { border-top: 0; }
+.lora .nm { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lora.off .nm { color: var(--muted); }
+.lora input[type=number] { width: 64px; padding: 6px; text-align: center; }
+.lora .x { background: none; border: 0; color: var(--muted); font-size: 20px; width: 28px; padding: 0; }
+.loralist .item { padding: 11px 4px; border-bottom: 1px solid var(--line); font-size: 14px; word-break: break-all; }
+.loralist .item.dir::before { content: "📁 "; }
+.fspath { display: flex; align-items: center; gap: 8px; padding: 4px 0 8px; font-size: 12px; color: var(--muted); word-break: break-all; }
+.loralist .item small { color: var(--muted); display: block; font-size: 11px; }
+.warnbox { background: rgba(224,160,48,.12); border: 1px solid rgba(224,160,48,.4); color: #f0c674; border-radius: var(--radius); padding: 12px; font-size: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><span class="dot" id="conn"></span><h1>Comfy Remote</h1><span id="queueInfo"></span></div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+<main id="main"><div class="empty">Loading…</div></main>
+<div class="genbar"><div class="genrow"><div class="stepper" id="runs" title="Runs"><button type="button">−</button><output></output><button type="button">+</button></div><button class="btn primary" id="genBtn">Generate</button></div></div>
+<div class="toast" id="toast"></div>
+
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="bar2">
+      <div class="seg" id="srcSeg"><button data-src="fs">PC folders</button><button data-src="input" class="active">Comfy input</button><button data-src="output">Comfy output</button></div>
+      <button class="btn ghost" id="sheetClose">Close</button>
+    </div>
+    <div class="body">
+      <div class="row" style="margin-bottom:10px"><label class="btn grow" style="text-align:center">Upload from phone<input type="file" id="upload" accept="image/*" hidden></label></div>
+      <div class="loralist" id="fsNav"></div>
+      <div class="pick" id="pickGrid"></div>
+      <div class="row" style="margin-top:12px"><button class="btn grow" id="moreBtn">Load more</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="loraSheet">
+  <div class="panel">
+    <div class="bar2"><input type="text" id="loraSearch" placeholder="Search LoRAs…" class="grow" autocomplete="off"><button class="btn ghost" id="loraClose">Close</button></div>
+    <div class="body"><div class="loralist" id="loraList"></div></div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer">
+  <div class="vimg" id="viewArea"><img id="viewImg" alt=""><button class="nav prev" id="viewPrev" type="button" aria-label="Previous">‹</button><button class="nav next" id="viewNext" type="button" aria-label="Next">›</button><span class="count" id="viewCount"></span></div>
+  <div class="vside">
+    <div class="vinfo"><details id="viewPromptBox"><summary id="viewPromptLabel">Prompt</summary><div class="used" id="viewPrompt"></div></details></div>
+    <div class="vbar">
+      <button class="btn" id="viewFav" type="button">☆ Fav</button><button class="btn" id="viewUseT2I" type="button">Use in T2I</button><button class="btn" id="viewDepth" type="button">Depth input</button>
+      <button class="btn" id="viewCopy" type="button">Copy prompt</button><a class="btn" id="viewOpen" target="_blank" rel="noopener">Full size</a><button class="btn" id="viewClose" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const clientId = "mobile-" + Math.random().toString(36).slice(2);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("cm:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("cm:" + k, JSON.stringify(v)); } catch {} },
+};
+let templates = {}, presets = [], activeTab = store.get("tab", "t2i");
+const jobs = {};            // prompt_id -> {tab, el, prompt}
+const MAX_SIDE = 2160;
+
+// ---------- settings per tab (persisted) ----------
+const defaults = {
+  t2i: { prompt: "", negative: null, size: "1024 x 1536", w: 1024, h: 1536, batch: 1, randomSeed: true, seed: 0 },
+  depth: { image: null, prompt: "", negative: null, autoDescribe: true, match: true, longest: 2048, size: "1024 x 1536", w: 1024, h: 1536, randomSeed: true, seed: 0 },
+};
+const S = { t2i: { ...defaults.t2i, ...store.get("s:t2i", {}) }, depth: { ...defaults.depth, ...store.get("s:depth", {}) } };
+const save = (tab) => store.set("s:" + tab, S[tab]);
+
+// ---------- template helpers ----------
+function findNode(prompt, cls, titleStart) {
+  const hits = Object.entries(prompt).filter(([id, n]) => n.class_type === cls &&
+    (!titleStart || (n._meta?.title || "").toUpperCase().startsWith(titleStart)));
+  hits.sort((a, b) => a[0].includes(":") - b[0].includes(":"));   // prefer top-level nodes
+  return hits[0] || null;
+}
+function setParam(job, cls, titleStart, input, value) {
+  const hit = findNode(job.prompt, cls, titleStart);
+  if (!hit) return false;
+  const [id, node] = hit;
+  node.inputs[input] = value;
+  // Mirror into the embedded workflow so dragging the result into ComfyUI shows these settings.
+  const wn = job.workflow?.nodes?.find((n) => String(n.id) === id);
+  if (wn) {
+    const order = { PrimitiveStringMultiline: ["value"], PrimitiveBoolean: ["value"], PrimitiveInt: ["value"], LoadImage: ["image"],
+      RepeatLatentBatch: ["amount"], KSampler: ["seed"], SizePresetPicker: ["preset", "custom_width", "custom_height"] }[cls];
+    const i = order ? order.indexOf(input) : -1;
+    if (i >= 0 && Array.isArray(wn.widgets_values)) wn.widgets_values[i] = value;
+    if (wn.widgets_values_named && input in wn.widgets_values_named) wn.widgets_values_named[input] = value;
+  }
+  return true;
+}
+const randomSeed = () => Math.floor(Math.random() * 2 ** 48);
+
+// ---------- UI builders ----------
+function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+function esc(s) { return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function sizePicker(tab) {
+  const st = S[tab];
+  const wrap = el(`<div class="sizes"></div>`);
+  const groups = [["Portrait", (p) => p.h > p.w], ["Square", (p) => p.h === p.w], ["Landscape", (p) => p.w > p.h]];
+  const tiles = [];
+  const mk = (label, w, h, text) => {
+    const s = 34 / Math.max(MAX_SIDE, w, h);
+    const b = el(`<button class="size" type="button"><span class="box"><span class="r" style="width:${Math.max(4, w * s)}px;height:${Math.max(4, h * s)}px"></span></span>${text}</button>`);
+    b.onclick = () => { st.size = label; if (label !== "Custom") { st.w = w; st.h = h; } save(tab); refresh(); };
+    tiles.push([label, b]); return b;
+  };
+  for (const [name, test] of groups) {
+    const items = presets.filter(test);
+    if (!items.length) continue;
+    wrap.append(el(`<div class="grp">${name}</div>`));
+    const grid = el(`<div class="grid"></div>`);
+    items.forEach((p) => grid.append(mk(p.label, p.w, p.h, `${p.w}×${p.h}`)));
+    wrap.append(grid);
+  }
+  wrap.append(el(`<div class="grp">Custom</div>`));
+  const cg = el(`<div class="grid"></div>`); cg.append(mk("Custom", st.w, st.h, "Custom")); wrap.append(cg);
+  const custom = el(`<div class="custom"><input type="number" step="8" min="64" max="8192" placeholder="Width"><input type="number" step="8" min="64" max="8192" placeholder="Height"></div>`);
+  const [wi, hi] = custom.querySelectorAll("input");
+  wi.oninput = () => { st.w = +wi.value || st.w; save(tab); };
+  hi.oninput = () => { st.h = +hi.value || st.h; save(tab); };
+  wrap.append(custom);
+  function refresh() {
+    tiles.forEach(([l, b]) => b.classList.toggle("sel", l === st.size));
+    custom.classList.toggle("show", st.size === "Custom");
+    wi.value = st.w; hi.value = st.h;
+  }
+  refresh();
+  return wrap;
+}
+
+function toggleRow(label, hint, get, set) {
+  const r = el(`<div><div class="row"><div class="grow">${label}</div><label class="switch"><input type="checkbox"><span></span></label></div>${hint ? `<div class="hint">${hint}</div>` : ""}</div>`);
+  const cb = r.querySelector("input"); cb.checked = get(); cb.onchange = () => set(cb.checked);
+  return r;
+}
+
+function seedCard(tab) {
+  const st = S[tab];
+  const c = el(`<div class="card"><h2>Seed</h2></div>`);
+  const num = el(`<input type="number" min="0" style="margin-top:10px">`);
+  num.value = st.seed; num.oninput = () => { st.seed = +num.value || 0; save(tab); };
+  c.append(toggleRow("New random seed each run", "", () => st.randomSeed, (v) => { st.randomSeed = v; save(tab); num.style.display = v ? "none" : ""; }));
+  num.style.display = st.randomSeed ? "none" : "";
+  c.append(num);
+  return c;
+}
+
+function negativeCard(tab, tpl) {
+  const st = S[tab];
+  if (st.negative == null) st.negative = findNode(tpl.prompt, "PrimitiveStringMultiline", "NEGATIVE")?.[1].inputs.value ?? "";
+  const d = el(`<details class="card"><summary>Negative prompt</summary><textarea class="small" style="margin-top:8px"></textarea></details>`);
+  const ta = d.querySelector("textarea"); ta.value = st.negative; ta.oninput = () => { st.negative = ta.value; save(tab); };
+  return d;
+}
+
+function jobsCard(tab) {
+  const c = el(`<div class="card"><h2>Results</h2><div class="jobs" id="jobs-${tab}"><div class="empty">Results show up here.</div></div><div class="row" style="margin-top:10px"><button class="btn grow" type="button">Clear finished</button></div></div>`);
+  c.querySelector(".row button").onclick = () => clearFinished(tab);
+  return c;
+}
+function clearFinished(tab) {
+  const list = $(`#jobs-${tab}`);
+  list.querySelectorAll(":scope > .job").forEach((c) => {
+    const id = c.dataset.id;
+    if (!id || jobs[id]?.finished) { c.remove(); delete jobs[id]; }
+  });
+  store.set("jobs", savedJobs().filter((r) => jobs[r.id]));
+  if (!list.children.length) list.append(el(`<div class="empty">Results show up here.</div>`));
+}
+
+// ---------- LoRAs (mirror the section's Power Lora Loader) ----------
+const LORA_CLS = "Power Lora Loader (rgthree)";
+function templateLoras(tpl) {
+  const n = findNode(tpl.prompt, LORA_CLS)?.[1];
+  if (!n) return null;
+  return Object.keys(n.inputs).filter((k) => /^lora_\d+$/.test(k)).sort((a, b) => a.slice(5) - b.slice(5))
+    .map((k) => n.inputs[k]).filter((v) => v && v.lora)
+    .map((v) => ({ lora: v.lora, on: v.on !== false, strength: v.strength ?? 1 }));
+}
+function loraCard(tab, tpl) {
+  const st = S[tab];
+  const base = templateLoras(tpl);
+  if (!base) return document.createComment("no lora loader");
+  // Re-sending the sections from the PC resets the phone's LoRA list to the PC's.
+  if (!st.loras || st.loras.captured !== tpl.captured) { st.loras = { captured: tpl.captured, list: base }; save(tab); }
+  const c = el(`<div class="card"><h2>LoRAs</h2><div class="rows"></div><div class="row" style="margin-top:8px"><button class="btn grow" type="button">+ Add LoRA</button></div></div>`);
+  const rows = c.querySelector(".rows");
+  const render = () => {
+    rows.innerHTML = "";
+    st.loras.list.forEach((l, i) => {
+      const short = l.lora.split(/[\\/]/).pop().replace(/\.safetensors$/i, "");
+      const r = el(`<div class="lora${l.on ? "" : " off"}"><label class="switch"><input type="checkbox"><span></span></label><div class="nm"></div><input type="number" step="0.05" min="-5" max="5"><button class="x" type="button" aria-label="Remove">×</button></div>`);
+      r.querySelector(".nm").textContent = short; r.querySelector(".nm").title = l.lora;
+      const cb = r.querySelector("input[type=checkbox]"), num = r.querySelector("input[type=number]");
+      cb.checked = l.on; cb.onchange = () => { l.on = cb.checked; r.classList.toggle("off", !l.on); save(tab); };
+      num.value = l.strength; num.oninput = () => { if (num.value !== "" && !isNaN(+num.value)) { l.strength = +num.value; save(tab); } };
+      r.querySelector(".x").onclick = () => { st.loras.list.splice(i, 1); save(tab); render(); };
+      rows.append(r);
+    });
+    if (!st.loras.list.length) rows.append(el(`<div class="hint">No LoRAs.</div>`));
+  };
+  c.querySelector(".row button").onclick = () => openLoraPicker((name) => { st.loras.list.push({ lora: name, on: true, strength: 1 }); save(tab); render(); });
+  render();
+  return c;
+}
+function applyLoras(job, tab) {
+  const list = S[tab].loras?.list;
+  const hit = findNode(job.prompt, LORA_CLS);
+  if (!hit || !list) return;
+  const [id, node] = hit;
+  for (const k of Object.keys(node.inputs)) if (/^lora_\d+$/.test(k)) delete node.inputs[k];
+  list.forEach((l, i) => { node.inputs[`lora_${i + 1}`] = { on: l.on, lora: l.lora, strength: l.strength }; });
+  const wn = job.workflow?.nodes?.find((n) => String(n.id) === id);
+  if (wn && Array.isArray(wn.widgets_values)) {
+    const head = wn.widgets_values.slice(0, 2), tail = wn.widgets_values.slice(-2);
+    wn.widgets_values = [...head, ...list.map((l) => ({ on: l.on, lora: l.lora, strength: l.strength, strengthTwo: null })), ...tail];
+  }
+}
+
+let loraNames = null, loraCb = null;
+async function openLoraPicker(cb) {
+  loraCb = cb; $("#loraSheet").classList.add("open"); $("#loraSearch").value = "";
+  if (!loraNames) { $("#loraList").innerHTML = `<div class="empty">Loading…</div>`; loraNames = await fetch("/models/loras").then((r) => r.json()).catch(() => []); }
+  renderLoraList();
+}
+function renderLoraList() {
+  const q = $("#loraSearch").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const hits = loraNames.filter((n) => q.every((w) => n.toLowerCase().includes(w))).slice(0, 200);
+  const list = $("#loraList"); list.innerHTML = "";
+  for (const n of hits) {
+    const parts = n.split(/[\\/]/), file = parts.pop();
+    const it = el(`<div class="item"></div>`); it.textContent = file.replace(/\.safetensors$/i, "");
+    if (parts.length) it.append(el(`<small>${esc(parts.join("/"))}</small>`));
+    it.onclick = () => { $("#loraSheet").classList.remove("open"); loraCb?.(n); };
+    list.append(it);
+  }
+  if (!hits.length) list.append(el(`<div class="empty">No matches.</div>`));
+}
+$("#loraSearch").oninput = renderLoraList;
+$("#loraClose").onclick = () => $("#loraSheet").classList.remove("open");
+
+// Generation tabs: settings column + results column (side by side on wide screens).
+function genSection(tab, side) {
+  const sec = el(`<section class="tab gen" data-tab="${tab}"></section>`);
+  const results = el(`<div class="col results"></div>`); results.append(jobsCard(tab));
+  sec.append(side, results);
+  return sec;
+}
+
+function buildT2I(tpl) {
+  const st = S.t2i;
+  const sec = el(`<div class="col side"></div>`);
+  const p = el(`<div class="card"><h2>Prompt</h2><textarea id="t2iPrompt" placeholder="Describe the image…"></textarea></div>`);
+  const ta = p.querySelector("textarea"); ta.value = st.prompt; ta.oninput = () => { st.prompt = ta.value; save("t2i"); };
+  sec.append(p, negativeCard("t2i", tpl));
+  const size = el(`<div class="card"><h2>Size</h2></div>`); size.append(sizePicker("t2i")); sec.append(size);
+  const b = el(`<div class="card"><div class="row"><div class="grow"><b>Batch size</b><div class="hint">Images per run</div></div><div class="stepper"><button type="button">−</button><output></output><button type="button">+</button></div></div></div>`);
+  const [minus, plus] = b.querySelectorAll("button"); const out = b.querySelector("output");
+  const upd = () => { out.textContent = st.batch; save("t2i"); };
+  minus.onclick = () => { st.batch = Math.max(1, st.batch - 1); upd(); };
+  plus.onclick = () => { st.batch = Math.min(8, st.batch + 1); upd(); };
+  upd();
+  sec.append(b, loraCard("t2i", tpl), seedCard("t2i"));
+  return genSection("t2i", sec);
+}
+
+function buildDepth(tpl) {
+  const st = S.depth;
+  const sec = el(`<div class="col side"></div>`);
+  const img = el(`<div class="card"><h2>Input image</h2><div class="picked"><img alt=""><div class="grow"><div class="name"></div><button class="btn" type="button" style="margin-top:8px">Choose image</button></div></div></div>`);
+  const thumb = img.querySelector("img"), name = img.querySelector(".name");
+  const showPicked = () => {
+    if (st.image) { thumb.src = `/mobile/thumb?${new URLSearchParams({ filename: st.image.filename, subfolder: st.image.subfolder, type: st.image.type, size: 256 })}`; name.textContent = `${st.image.type}/${st.image.subfolder ? st.image.subfolder + "/" : ""}${st.image.filename}`; }
+    else { thumb.removeAttribute("src"); name.textContent = "No image selected"; }
+  };
+  showPicked();
+  setDepthImage = (it) => { st.image = it; save("depth"); showPicked(); };
+  img.querySelector("button").onclick = () => openPicker(setDepthImage);
+  sec.append(img);
+
+  const pc = el(`<div class="card"><h2>Prompt</h2></div>`);
+  const ta = el(`<textarea></textarea>`); ta.value = st.prompt; ta.oninput = () => { st.prompt = ta.value; save("depth"); };
+  const hint = el(`<div class="hint"></div>`);
+  const label = () => {
+    ta.placeholder = st.autoDescribe ? "Optional changes, e.g. “she is smiling, her hair is red”. Leave empty to recreate the image." : "Full prompt…";
+    hint.textContent = st.autoDescribe ? "The text model describes your image and applies these changes." : "Your text is used exactly as the prompt.";
+  };
+  pc.append(toggleRow("Auto-describe image", "", () => st.autoDescribe, (v) => { st.autoDescribe = v; save("depth"); label(); }), el(`<div style="height:10px"></div>`), ta, hint);
+  label();
+  sec.append(pc, negativeCard("depth", tpl));
+
+  const size = el(`<div class="card"><h2>Size</h2></div>`);
+  const picker = sizePicker("depth");
+  // Longest side: only when the captured workflow has the LONGEST SIDE setting.
+  const hasLongest = !!findNode(tpl.prompt, "PrimitiveInt", "LONGEST SIDE");
+  const longest = el(`<div style="margin-top:10px"><div class="row"><div class="grow">Longest side</div><input type="number" step="16" min="0" max="8192" style="width:96px"></div><div class="row"><div class="seg"></div></div><div class="hint"></div></div>`);
+  const lnum = longest.querySelector("input"), lseg = longest.querySelector(".seg"), lhint = longest.querySelector(".hint");
+  const lopts = [["Original", 0], ["1536", 1536], ["2048", 2048], ["2560", 2560]];
+  const lbtns = lopts.map(([label, v]) => { const b = el(`<button type="button">${label}</button>`); b.onclick = () => { st.longest = v; save("depth"); lrefresh(); }; lseg.append(b); return [v, b]; });
+  lnum.oninput = () => { if (lnum.value !== "") { st.longest = Math.max(0, +lnum.value || 0); save("depth"); lrefresh(true); } };
+  function lrefresh(typing) {
+    if (!typing) lnum.value = st.longest;
+    lbtns.forEach(([v, b]) => b.classList.toggle("active", v === st.longest));
+    lhint.textContent = st.longest > 0 ? `Keeps the picked image's shape; its longer edge becomes ${st.longest}px. Nothing is cropped.` : "Uses the picked image's own size (rounded to 16).";
+  }
+  lrefresh();
+  const showSize = () => { picker.style.display = st.match ? "none" : ""; longest.style.display = st.match && hasLongest ? "" : "none"; };
+  size.append(toggleRow("Match input image shape", hasLongest ? "" : "Uses the picked image's size (rounded to 16).", () => st.match, (v) => { st.match = v; save("depth"); showSize(); }), longest, picker);
+  showSize();
+  sec.append(size, loraCard("depth", tpl), seedCard("depth"));
+  return genSection("depth", sec);
+}
+
+// ---------- image picker sheet ----------
+let pickCb = null, pickSrc = "input", pickOffset = 0;
+// "PC folders": browse folders on the PC; a picked image is copied into ComfyUI's input/mobile.
+let fsPath = store.get("fsPath", null);
+async function loadFs(reset) {
+  const grid = $("#pickGrid"), nav = $("#fsNav");
+  if (reset) { grid.innerHTML = ""; nav.innerHTML = ""; pickOffset = 0; }
+  const folderRow = (label, path) => {
+    const it = el(`<div class="item dir"></div>`); it.textContent = label;
+    it.onclick = () => { fsPath = path; store.set("fsPath", path); loadFs(true); };
+    nav.append(it);
+  };
+  if (!fsPath) {
+    const roots = await fetch("/mobile/fs/roots").then((r) => r.json()).catch(() => []);
+    roots.forEach((r) => folderRow(r.name === r.path ? r.path : `${r.name}  (${r.path})`, r.path));
+    $("#moreBtn").style.display = "none";
+    return;
+  }
+  const r = await fetch(`/mobile/fs/list?${new URLSearchParams({ path: fsPath, limit: 60, offset: pickOffset })}`);
+  if (!r.ok) { fsPath = null; store.set("fsPath", null); return loadFs(true); }
+  const d = await r.json();
+  if (reset) {
+    const head = el(`<div class="fspath"><button class="btn" type="button">⬆ Up</button><span class="grow"></span></div>`);
+    head.querySelector("span").textContent = d.path;
+    head.querySelector("button").onclick = () => { fsPath = d.parent; store.set("fsPath", fsPath); loadFs(true); };
+    nav.append(head);
+    d.dirs.forEach((name) => folderRow(name, d.path.replace(/[\\/]$/, "") + "\\" + name));
+  }
+  pickOffset += d.images.length;
+  for (const name of d.images) {
+    const full = d.path.replace(/[\\/]$/, "") + "\\" + name;
+    const im = el(`<img loading="lazy" alt="">`);
+    im.src = `/mobile/fs/thumb?${new URLSearchParams({ path: full, size: 256 })}`;
+    im.onclick = async () => {
+      const res = await fetch("/mobile/fs/use", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: full }) });
+      if (!res.ok) { alert("Could not use that image."); return; }
+      pickCb?.(await res.json()); closePicker();
+    };
+    grid.append(im);
+  }
+  if (reset && !d.images.length && !d.dirs.length) grid.append(el(`<div class="empty" style="grid-column:1/-1">Empty folder.</div>`));
+  else if (reset && !d.images.length) grid.append(el(`<div class="empty" style="grid-column:1/-1">No images in this folder.</div>`));
+  $("#moreBtn").style.display = pickOffset < d.total ? "" : "none";
+}
+
+async function loadPick(reset) {
+  if (pickSrc === "fs") return loadFs(reset);
+  const grid = $("#pickGrid");
+  if (reset) { grid.innerHTML = ""; $("#fsNav").innerHTML = ""; pickOffset = 0; }
+  const r = await fetch(`/mobile/images?type=${pickSrc}&limit=60&offset=${pickOffset}`).then((r) => r.json());
+  pickOffset += r.items.length;
+  for (const it of r.items) {
+    const im = el(`<img loading="lazy" alt="">`);
+    im.src = `/mobile/thumb?${new URLSearchParams({ filename: it.filename, subfolder: it.subfolder, type: it.type, size: 256 })}`;
+    im.onclick = () => { pickCb?.(it); closePicker(); };
+    grid.append(im);
+  }
+  if (!grid.children.length) grid.append(el(`<div class="empty" style="grid-column:1/-1">No images here.</div>`));
+  $("#moreBtn").style.display = pickOffset < r.total ? "" : "none";
+}
+function openPicker(cb, src) {
+  pickCb = cb; if (src) { pickSrc = src; [...$("#srcSeg").children].forEach((x) => x.classList.toggle("active", x.dataset.src === src)); }
+  $("#sheet").classList.add("open"); loadPick(true);
+}
+function closePicker() { $("#sheet").classList.remove("open"); }
+$("#sheetClose").onclick = closePicker;
+$("#moreBtn").onclick = () => loadPick(false);
+$("#srcSeg").onclick = (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  pickSrc = b.dataset.src; [...$("#srcSeg").children].forEach((x) => x.classList.toggle("active", x === b)); loadPick(true);
+};
+$("#upload").onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const fd = new FormData(); fd.append("image", f); fd.append("type", "input"); fd.append("subfolder", "mobile");
+  const r = await fetch("/upload/image", { method: "POST", body: fd });
+  if (!r.ok) { alert("Upload failed"); return; }
+  const j = await r.json();
+  pickCb?.({ filename: j.name, subfolder: j.subfolder || "", type: j.type || "input" });
+  e.target.value = ""; closePicker();
+};
+
+// ---------- small helpers ----------
+let setDepthImage = null;
+let toastTimer;
+function toast(text) {
+  const t = $("#toast"); t.textContent = text; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast("Prompt copied"); return; } catch {}
+  // navigator.clipboard only exists on https/localhost; over plain LAN http fall back to a hidden textarea.
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+  document.body.append(ta); ta.select(); ta.setSelectionRange(0, text.length);
+  let ok = false; try { ok = document.execCommand("copy"); } catch {}
+  ta.remove();
+  toast(ok ? "Prompt copied" : "Couldn't copy here — use “Use in T2I” instead");
+}
+function useInT2I(text) {
+  if (!templates.t2i) return;
+  S.t2i.prompt = text; save("t2i");
+  const ta = $("#t2iPrompt"); if (ta) ta.value = text;
+  closeViewer(); selectTab("t2i"); window.scrollTo(0, 0);
+  toast("Prompt placed in Text to Image");
+}
+// History reports Windows subfolders with "\", the gallery with "/": key on the "/" form.
+const imgKey = (it) => `${it.type}/${(it.subfolder || "").replace(/\\/g, "/")}/${it.filename}`;
+const viewUrl = (it) => `/view?${new URLSearchParams({ filename: it.filename, subfolder: it.subfolder || "", type: it.type })}`;
+const thumbUrl = (it, size) => `/mobile/thumb?${new URLSearchParams({ filename: it.filename, subfolder: it.subfolder || "", type: it.type, size })}`;
+
+// ---------- files kept on the PC (ComfyUI user folder, shared by every phone/browser) ----------
+const FAVS_URL = "/userdata/mobile_favs.json", LOG_URL = "/userdata/mobile_prompts.json";
+async function readUser(url, d) { try { const r = await fetch(url, { cache: "no-store" }); return r.ok ? await r.json() : d; } catch { return d; } }
+async function writeUser(url, data) {
+  const r = await fetch(url, { method: "POST", body: JSON.stringify(data) });
+  if (!r.ok) throw new Error(await r.text());
+}
+
+// Prompt log: image -> prompt, written when a phone job finishes, so the gallery can show the prompt later.
+let promptLog = null, logChain = Promise.resolve();
+async function getLog() { if (!promptLog) promptLog = await readUser(LOG_URL, {}); return promptLog; }
+function logPrompts(items, info) {
+  if (!info.text || !items.length) return;
+  logChain = logChain.then(async () => {
+    const known = await getLog();
+    if (items.every((im) => known[imgKey(im)])) return;
+    const cur = await readUser(LOG_URL, {});   // merge with other devices
+    for (const im of items) cur[imgKey(im)] ??= info;
+    const keys = Object.keys(cur);
+    for (const k of keys.slice(0, Math.max(0, keys.length - 1500))) delete cur[k];
+    promptLog = cur;
+    await writeUser(LOG_URL, cur);
+  }).catch(() => {});
+}
+
+// Images made elsewhere (e.g. on the PC): read the typed prompt from the PNG's own metadata.
+async function pngPrompt(it) {
+  if (!/\.png$/i.test(it.filename)) return null;
+  try {
+    const r = await fetch(viewUrl(it), { headers: { Range: "bytes=0-4194303" } });
+    const buf = new Uint8Array(await r.arrayBuffer()), dv = new DataView(buf.buffer);
+    for (let p = 8; p + 8 <= buf.length;) {
+      const len = dv.getUint32(p), type = String.fromCharCode(...buf.subarray(p + 4, p + 8));
+      if (type === "IDAT" || p + 12 + len > buf.length) break;
+      if (type === "tEXt") {
+        const data = buf.subarray(p + 8, p + 8 + len), z = data.indexOf(0);
+        if (String.fromCharCode(...data.subarray(0, z)) === "prompt") {
+          const api = JSON.parse(new TextDecoder().decode(data.subarray(z + 1)));
+          const text = findNode(api, "PrimitiveStringMultiline", "MANUAL PROMPT")?.[1].inputs.value;
+          return typeof text === "string" && text.trim() ? { text, kind: "typed" } : null;
+        }
+      }
+      p += 12 + len;
+    }
+  } catch {}
+  return null;
+}
+async function lookupPrompt(it) {
+  const k = imgKey(it);
+  const fav = favs.find((f) => imgKey(f) === k && f.prompt);
+  if (fav) return { text: fav.prompt, kind: fav.kind, seed: fav.seed, tab: fav.from };
+  const logged = (await getLog())[k];
+  return logged || await pngPrompt(it);
+}
+
+// ---------- favourites ----------
+let favs = [];
+const isFav = (it) => favs.some((f) => imgKey(f) === imgKey(it));
+async function toggleFav(it, info) {
+  const cur = await readUser(FAVS_URL, []);
+  const k = imgKey(it), had = cur.some((f) => imgKey(f) === k);
+  const next = had ? cur.filter((f) => imgKey(f) !== k)
+    : [{ filename: it.filename, subfolder: it.subfolder || "", type: it.type, prompt: info?.text || "", kind: info?.kind || "",
+         seed: info?.seed ?? null, from: info?.tab || "", added: Date.now() }, ...cur];
+  try { await writeUser(FAVS_URL, next); } catch (e) { alert("Could not save favourites: " + e.message); return; }
+  favs = next;
+  toast(had ? "Removed from Favs" : "Added to Favs");
+  renderFavs(); markGallery();
+}
+const favInfo = (f) => f.prompt ? { text: f.prompt, kind: f.kind, seed: f.seed, tab: f.from } : null;
+const favList = () => favs.map((f) => ({ it: f, info: favInfo(f) }));
+function buildFavs() {
+  const sec = el(`<section class="tab" data-tab="favs"><div class="card"><h2>Favourites</h2><div class="favs" id="favGrid"></div></div></section>`);
+  return sec;
+}
+function renderFavs() {
+  const grid = $("#favGrid"); if (!grid) return;
+  grid.innerHTML = "";
+  for (const f of favs) {
+    const c = el(`<div class="fv"><img loading="lazy" alt=""><p></p></div>`);
+    c.querySelector("img").src = thumbUrl(f, 384);
+    c.querySelector("p").textContent = f.prompt || "No saved prompt";
+    c.onclick = () => openViewer(f, favInfo(f), favList);
+    grid.append(c);
+  }
+  if (!favs.length) grid.append(el(`<div class="empty" style="grid-column:1/-1">No favourites yet. Open any result or gallery image and tap ☆ Fav.</div>`));
+}
+
+// ---------- gallery ----------
+let galOffset = 0, galTotal = 0, galLoading = false, galSharp = store.get("galSharp", false), galItems = [];
+const galList = () => galItems.map((it) => ({ it }));
+const galHasMore = () => galOffset < galTotal;
+function buildGallery() {
+  const sec = el(`<section class="tab" data-tab="gallery"><div class="card"><div class="row"><h2 class="grow" style="margin:0">Recent outputs</h2><button class="btn ghost" type="button">Refresh</button></div><div class="sharp"></div><div class="pick" id="galGrid" style="margin-top:10px"></div><div class="row" style="margin-top:12px"><button class="btn grow" id="galMore" type="button">Load more</button></div></div></section>`);
+  sec.querySelector(".row .btn").onclick = () => loadGallery(true);
+  sec.querySelector(".sharp").append(toggleRow("Show sharpened copies", "", () => galSharp, (v) => { galSharp = v; store.set("galSharp", v); loadGallery(true); }));
+  sec.querySelector("#galMore").onclick = () => loadGallery(false);
+  return sec;
+}
+async function loadGallery(reset) {
+  if (galLoading) return; galLoading = true;
+  const grid = $("#galGrid");
+  try {
+    if (reset) galOffset = 0;
+    let shown = 0;
+    const frag = document.createDocumentFragment(), added = [];
+    // Keep fetching pages until something is visible (sharpened copies may be filtered out).
+    do {
+      const r = await fetch(`/mobile/images?type=output&limit=60&offset=${galOffset}`).then((r) => r.json());
+      galTotal = r.total; galOffset += r.items.length;
+      for (const it of r.items) {
+        if (!galSharp && /(^|\/)sharpened/i.test(`${it.subfolder}/${it.filename}`)) continue;
+        const t = el(`<div class="gimg"><img loading="lazy" alt=""><span class="star">★</span></div>`);
+        t.dataset.key = imgKey(it); t.classList.toggle("fav", isFav(it));
+        t.querySelector("img").src = thumbUrl(it, 256);
+        t.onclick = () => openViewer(it, null, galList);
+        frag.append(t); added.push(it); shown++;
+      }
+      if (!r.items.length) break;
+    } while (shown < 12 && galHasMore());
+    if (reset) { grid.innerHTML = ""; galItems = []; }
+    galItems.push(...added);
+    grid.append(frag);
+    if (!grid.children.length) grid.append(el(`<div class="empty" style="grid-column:1/-1">No outputs yet.</div>`));
+    $("#galMore").style.display = galHasMore() ? "" : "none";
+  } catch (e) { toast("Could not load gallery"); }
+  finally { galLoading = false; }
+}
+function markGallery() { document.querySelectorAll("#galGrid .gimg").forEach((t) => t.classList.toggle("fav", favs.some((f) => imgKey(f) === t.dataset.key))); }
+
+// ---------- viewer ----------
+// `list` (optional) is an array, or a function returning one, of {it, info}: the images you can swipe through.
+let viewing = null, viewList = null;   // viewing = {it, info}
+const wide = matchMedia("(min-width: 1000px)");
+const viewItems = () => (typeof viewList === "function" ? viewList() : viewList) || [];
+const viewIndex = () => viewing ? viewItems().findIndex((x) => imgKey(x.it) === imgKey(viewing.it)) : -1;
+function openViewer(it, info, list) {
+  viewList = list || null;
+  $("#viewer").classList.add("open");
+  showImage(it, info);
+}
+function showImage(it, info) {
+  viewing = { it, info: info || null };
+  $("#viewImg").src = viewUrl(it); $("#viewOpen").href = viewUrl(it);
+  $("#viewDepth").disabled = !templates.depth;
+  $("#viewPromptBox").open = wide.matches;
+  const items = viewItems(), i = viewIndex();
+  const more = viewList === galList && galHasMore();
+  $("#viewPrev").hidden = i <= 0;
+  $("#viewNext").hidden = i < 0 || (i >= items.length - 1 && !more);
+  $("#viewCount").textContent = i >= 0 && (items.length > 1 || more) ? `${i + 1} / ${items.length}${more ? "+" : ""}` : "";
+  for (const n of [items[i - 1], items[i + 1]]) if (n) new Image().src = viewUrl(n.it);   // preload neighbours
+  showViewInfo();
+  if (!info) {
+    $("#viewPromptLabel").textContent = "Looking up prompt…";
+    const mine = viewing;
+    lookupPrompt(it).then((found) => { if (viewing === mine) { mine.info = found; showViewInfo(); } });
+  }
+}
+async function stepViewer(d) {
+  let i = viewIndex(); if (i < 0) return;
+  if (d > 0 && i >= viewItems().length - 1 && viewList === galList && galHasMore()) await loadGallery(false);
+  const n = viewItems()[i + d];
+  if (n) showImage(n.it, n.info);
+}
+$("#viewPrev").onclick = () => stepViewer(-1);
+$("#viewNext").onclick = () => stepViewer(1);
+{
+  // Swipe left/right on the image; ignored while pinch-zooming.
+  let start = null;
+  const area = $("#viewArea");
+  area.addEventListener("touchstart", (e) => { start = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null; }, { passive: true });
+  area.addEventListener("touchmove", (e) => { if (e.touches.length > 1) start = null; }, { passive: true });
+  area.addEventListener("touchend", (e) => {
+    if (!start || (window.visualViewport?.scale ?? 1) > 1.01) { start = null; return; }
+    const t = e.changedTouches[0], dx = t.clientX - start.x, dy = t.clientY - start.y;
+    start = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > 1.5 * Math.abs(dy)) stepViewer(dx < 0 ? 1 : -1);
+  });
+}
+document.addEventListener("keydown", (e) => {
+  if (!viewing || e.target.matches?.("input, textarea")) return;
+  if (e.key === "ArrowRight") stepViewer(1);
+  else if (e.key === "ArrowLeft") stepViewer(-1);
+  else if (e.key === "Escape") closeViewer();
+});
+function showViewInfo() {
+  const { it, info } = viewing;
+  const fav = isFav(it);
+  $("#viewFav").textContent = fav ? "★ Faved" : "☆ Fav"; $("#viewFav").classList.toggle("on", fav);
+  const text = info?.text || "";
+  $("#viewPrompt").textContent = text;
+  $("#viewPromptLabel").textContent = !text ? "No prompt found for this image" : info.kind === "typed" ? "Typed prompt" : "Prompt used";
+  $("#viewPrompt").parentElement.style.pointerEvents = text ? "" : "none";
+  $("#viewUseT2I").disabled = !text || !templates.t2i;
+  $("#viewCopy").disabled = !text;
+}
+function closeViewer() { $("#viewer").classList.remove("open"); $("#viewImg").removeAttribute("src"); viewing = null; viewList = null; }
+$("#viewClose").onclick = closeViewer;
+$("#viewFav").onclick = async () => { const v = viewing; if (!v) return; await toggleFav(v.it, v.info); if (viewing === v) showViewInfo(); };
+$("#viewCopy").onclick = () => viewing?.info?.text && copyText(viewing.info.text);
+$("#viewUseT2I").onclick = () => viewing?.info?.text && useInT2I(viewing.info.text);
+$("#viewDepth").onclick = () => {
+  if (!viewing || !setDepthImage) return;
+  setDepthImage({ filename: viewing.it.filename, subfolder: viewing.it.subfolder || "", type: viewing.it.type });
+  closeViewer(); selectTab("depth"); window.scrollTo(0, 0); toast("Set as Depth input image");
+};
+
+// ---------- generate ----------
+let runs = store.get("runs", 1);
+function buildJob(tab, tpl, st, seed) {
+  const job = { prompt: structuredClone(tpl.prompt), workflow: tpl.workflow ? structuredClone(tpl.workflow) : null };
+  setParam(job, "KSampler", "", "seed", seed);
+  setParam(job, "PrimitiveStringMultiline", "NEGATIVE", "value", st.negative ?? "");
+  setParam(job, "PrimitiveStringMultiline", "MANUAL PROMPT", "value", st.prompt);
+  if (tab === "t2i") {
+    setParam(job, "PrimitiveBoolean", "AUTO RESOLUTION", "value", false);
+    setParam(job, "SizePresetPicker", "", "preset", "Custom");
+    setParam(job, "SizePresetPicker", "", "custom_width", st.w);
+    setParam(job, "SizePresetPicker", "", "custom_height", st.h);
+    setParam(job, "RepeatLatentBatch", "", "amount", st.batch);
+  } else {
+    const path = (st.image.subfolder ? st.image.subfolder + "/" : "") + st.image.filename + (st.image.type === "output" ? " [output]" : "");
+    setParam(job, "LoadImage", "LOAD IMAGE", "image", path);
+    setParam(job, "PrimitiveBoolean", "AUTO-DESCRIBE", "value", st.autoDescribe);
+    setParam(job, "PrimitiveBoolean", "MATCH INPUT", "value", st.match);
+    setParam(job, "PrimitiveInt", "LONGEST SIDE", "value", st.longest);
+    setParam(job, "PrimitiveBoolean", "AUTO RESOLUTION", "value", false);
+    setParam(job, "PrimitiveInt", "MANUAL WIDTH", "value", st.w);
+    setParam(job, "PrimitiveInt", "MANUAL HEIGHT", "value", st.h);
+  }
+  applyLoras(job, tab);
+  return job;
+}
+
+async function generate() {
+  const tab = activeTab, tpl = templates[tab], st = S[tab];
+  if (!tpl) return;
+  if (tab === "t2i" && !st.prompt.trim()) { alert("Type a prompt first."); return; }
+  if (tab === "depth") {
+    if (!st.image) { alert("Choose an input image first."); return; }
+    if (!st.autoDescribe && !st.prompt.trim()) { alert("Type a prompt, or turn on Auto-describe."); return; }
+  }
+  const btn = $("#genBtn"); btn.disabled = true;
+  try {
+    // With a fixed seed, repeated runs count up from it so they don't all make the same image.
+    for (let i = 0; i < runs; i++) {
+      const seed = st.randomSeed ? randomSeed() : st.seed + i;
+      const job = buildJob(tab, tpl, st, seed);
+      const body = { prompt: job.prompt, client_id: clientId };
+      if (job.workflow) body.extra_data = { extra_pnginfo: { workflow: job.workflow } };
+      const r = await fetch("/prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const j = await r.json();
+      if (!r.ok || j.error) { showError(tab, j); return; }
+      addJob(tab, j.prompt_id, job.prompt, seed, Date.now(), false, st.prompt);
+    }
+  } catch (e) { alert("Could not reach ComfyUI: " + e.message); }
+  finally { btn.disabled = false; }
+}
+$("#genBtn").onclick = generate;
+{
+  const [minus, plus] = $("#runs").querySelectorAll("button"), out = $("#runs output");
+  const upd = () => { out.textContent = "×" + runs; $("#genBtn").textContent = runs > 1 ? `Generate ×${runs}` : "Generate"; store.set("runs", runs); };
+  minus.onclick = () => { runs = Math.max(1, runs - 1); upd(); };
+  plus.onclick = () => { runs = Math.min(10, runs + 1); upd(); };
+  upd();
+}
+
+function showError(tab, j) {
+  const msgs = [j.error?.message, ...Object.values(j.node_errors || {}).flatMap((n) => n.errors.map((e) => `${n.class_type}: ${e.message} ${e.details || ""}`))].filter(Boolean);
+  const list = $(`#jobs-${tab}`); list.querySelector(".empty")?.remove();
+  list.prepend(el(`<div class="job error card" style="background:var(--panel-2)"><div class="head"><b>Not queued</b><span class="state">error</span></div><div class="used">${esc(msgs.join("\n"))}</div></div>`));
+}
+
+// Jobs are remembered across reloads (phones often reload a page after switching apps or locking).
+const savedJobs = () => store.get("jobs", []);
+function rememberJob(rec) { store.set("jobs", [rec, ...savedJobs().filter((r) => r.id !== rec.id)].slice(0, 20)); }
+
+function addJob(tab, id, prompt, seed, started = Date.now(), restored = false, typed = "") {
+  const list = $(`#jobs-${tab}`); if (!list) return;
+  list.querySelector(".empty")?.remove();
+  const c = el(`<div class="job card" style="background:var(--panel-2)"><div class="head"><span>Seed ${seed}</span><span class="state">Queued</span></div><div class="bar"><i></i></div><div class="hint stage"></div><div class="thumbs"></div><div class="used"></div><div class="row" style="margin-top:8px"><button class="btn ghost" type="button">Cancel</button></div></div>`);
+  c.dataset.id = id;
+  c.querySelector("button").onclick = async () => {
+    await fetch("/queue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ delete: [id] }) });
+    await fetch("/interrupt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt_id: id }) });
+  };
+  restored ? list.append(c) : list.prepend(c);
+  jobs[id] = { tab, el: c, prompt, started, seed, typed, stage: "Queued" };
+  // Only titles and node types are needed later (to label results), so store a slim copy.
+  if (!restored) rememberJob({ id, tab, seed, started, typed, prompt: Object.fromEntries(Object.entries(prompt).map(([k, n]) => [k, { class_type: n.class_type, _meta: n._meta }])) });
+  pollJob(id);
+}
+
+const clock = (ms) => { const s = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+function setState(id, text, cls) {
+  const j = jobs[id]; if (!j) return;
+  if (text != null) j.stage = text;
+  j.el.querySelector(".state").textContent = j.finished || cls ? j.stage : `${j.stage} · ${clock(Date.now() - j.started)}`;
+  const hint = j.el.querySelector(".stage");
+  if (hint) hint.textContent = j.stage === "Loading models…" ? "The first run after ComfyUI starts loads the models from disk. This can take a couple of minutes." : "";
+  if (cls) j.el.classList.add(cls);
+}
+setInterval(() => { for (const id in jobs) if (!jobs[id].finished) setState(id); }, 1000);
+
+async function finishJob(id) {
+  const j = jobs[id]; if (!j || j.finished || j.finishing) return;
+  j.finishing = true;   // websocket and the poll fallback can both get here
+  const h = await fetch(`/history/${id}`).then((r) => r.json()).catch(() => ({}));
+  const entry = h[id];
+  j.finishing = false;
+  if (!entry) return;
+  j.finished = true;
+  j.el.querySelector(".row")?.remove();
+  j.el.querySelector(".stage")?.remove();
+  j.el.querySelector(".bar i").style.width = "100%";
+  const status = entry.status?.status_str;
+  if (status !== "success" && entry.status?.messages?.some((m) => m[0] === "execution_interrupted")) { setState(id, "Cancelled", "error"); return; }
+  if (status === "error") {
+    const err = entry.status.messages?.find((m) => m[0] === "execution_error")?.[1];
+    setState(id, "Failed", "error");
+    j.el.querySelector(".used").textContent = err ? `${err.node_type}: ${err.exception_message}` : "Execution failed";
+    return;
+  }
+  const secs = entry.status?.messages?.filter((m) => /^execution_(start|success)$/.test(m[0])).map((m) => m[1].timestamp);
+  setState(id, secs?.length === 2 ? `Done in ${clock(secs[1] - secs[0])}` : "Done", "done");
+  const thumbs = j.el.querySelector(".thumbs");
+  const imgs = [];
+  let used = "";
+  for (const [nid, out] of Object.entries(entry.outputs || {})) {
+    const title = j.prompt[nid]?._meta?.title || "";
+    for (const im of out.images || []) if (im.type === "output") imgs.push({ ...im, title });
+    if (out.text && /prompt used/i.test(title) && !/negative/i.test(title)) used = out.text.join("\n");
+  }
+  imgs.sort((a, b) => /sharpen/i.test(a.title) - /sharpen/i.test(b.title));
+  const info = used ? { text: used, kind: "used", seed: j.seed, tab: j.tab }
+    : j.typed?.trim() ? { text: j.typed, kind: "typed", seed: j.seed, tab: j.tab } : null;
+  for (const im of imgs) {
+    const f = el(`<figure><img loading="lazy" alt=""><figcaption>${/sharpen/i.test(im.title) ? "Sharpened" : "Original"}</figcaption></figure>`);
+    f.querySelector("img").src = thumbUrl(im, 512);
+    // Swipe through this job's batch: originals with originals, sharpened with sharpened.
+    const sharp = /sharpen/i.test(im.title);
+    f.onclick = () => openViewer(im, info, imgs.filter((x) => /sharpen/i.test(x.title) === sharp).map((x) => ({ it: x, info })));
+    thumbs.append(f);
+  }
+  if (!imgs.length) thumbs.append(el(`<div class="empty" style="grid-column:1/-1">No images were saved.</div>`));
+  if (info) logPrompts(imgs, info);
+  if (used) {
+    const d = el(`<details style="margin-top:6px"><summary>Prompt used</summary><div class="used"></div><div class="acts"><button class="btn" type="button">Copy</button><button class="btn" type="button">Use in Text to Image</button></div></details>`);
+    d.querySelector(".used").textContent = used;
+    const [copy, use] = d.querySelectorAll(".acts button");
+    copy.onclick = () => copyText(used);
+    use.onclick = () => useInT2I(used);
+    if (!templates.t2i) use.remove();
+    j.el.querySelector(".used").replaceWith(d);
+  }
+}
+
+// Checks history and the queue directly, so results show even if websocket messages were missed
+// (screen locked, app switched, page reloaded).
+async function checkJob(id) {
+  const j = jobs[id]; if (!j || j.finished) return;
+  const h = await fetch(`/history/${id}`).then((r) => r.json()).catch(() => null);
+  if (h?.[id]) return finishJob(id);
+  const q = await fetch("/queue").then((r) => r.json()).catch(() => null);
+  if (!q) return;
+  if (q.queue_running.some((e) => e[1] === id)) {
+    if (j.stage === "Queued" || /^Waiting/.test(j.stage)) setState(id, "Running");
+    return;
+  }
+  const pos = q.queue_pending.sort((a, b) => a[0] - b[0]).findIndex((e) => e[1] === id);
+  if (pos >= 0) return setState(id, `Waiting · ${pos + q.queue_running.length} ahead`);
+  // Not queued: either it just finished, or ComfyUI was restarted and forgot it.
+  const h2 = await fetch(`/history/${id}`).then((r) => r.json()).catch(() => null);
+  if (h2?.[id]) return finishJob(id);
+  if (h2 && !j.finished) { setState(id, "Lost — ComfyUI was restarted", "error"); j.finished = true; j.el.querySelector(".row")?.remove(); j.el.querySelector(".stage")?.remove(); }
+}
+async function pollJob(id) {
+  checkJob(id);
+  while (jobs[id] && !jobs[id].finished) {
+    await new Promise((r) => setTimeout(r, 3000));
+    await checkJob(id);
+  }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) for (const id in jobs) checkJob(id); });
+
+function stageName(prompt, nodeId) {
+  const cls = prompt[nodeId]?.class_type || "";
+  if (/Loader|LoadImage$/.test(cls)) return "Loading models…";
+  if (/TextGenerate/.test(cls)) return "Describing image…";
+  if (/CLIPTextEncode/.test(cls)) return "Reading prompt…";
+  if (/KSampler/.test(cls)) return "Generating…";
+  if (/VAEDecode/.test(cls)) return "Decoding…";
+  if (/Save|Sharpen|Preview|Comparer/.test(cls)) return "Saving…";
+  if (/Depth/.test(cls)) return "Making depth map…";
+  return "Working…";
+}
+
+// ---------- websocket ----------
+function connect() {
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws?clientId=${clientId}`);
+  ws.onopen = () => $("#conn").classList.add("on");
+  ws.onclose = () => { $("#conn").classList.remove("on"); setTimeout(connect, 2000); };
+  ws.onmessage = (ev) => {
+    if (typeof ev.data !== "string") return;
+    let m; try { m = JSON.parse(ev.data); } catch { return; }
+    const d = m.data || {};
+    if (m.type === "status") {
+      const n = d.status?.exec_info?.queue_remaining ?? 0;
+      $("#queueInfo").textContent = n ? `${n} in queue` : "Idle";
+    } else if (m.type === "execution_start" && jobs[d.prompt_id]) setState(d.prompt_id, "Starting…");
+    else if (m.type === "executing" && d.prompt_id && jobs[d.prompt_id]) {
+      if (d.node == null) finishJob(d.prompt_id);
+      else setState(d.prompt_id, stageName(jobs[d.prompt_id].prompt, d.node));
+    } else if (m.type === "progress" && jobs[d.prompt_id]) {
+      const j = jobs[d.prompt_id];
+      j.el.querySelector(".bar i").style.width = `${Math.round((d.value / d.max) * 100)}%`;
+      if (d.max > 1) setState(d.prompt_id, `${/TextGenerate/.test(j.prompt[d.node]?.class_type) ? "Describing image" : "Generating"} ${d.value}/${d.max}`);
+    } else if ((m.type === "execution_success" || m.type === "execution_error" || m.type === "execution_interrupted") && jobs[d.prompt_id]) {
+      if (m.type === "execution_interrupted") setState(d.prompt_id, "Cancelled", "error");
+      setTimeout(() => finishJob(d.prompt_id), 300);
+    }
+  };
+}
+
+// On wide screens the Generate bar sits at the bottom of the settings column; on phones it spans the screen.
+function placeGenbar() {
+  const bar = $(".genbar"), side = wide.matches && $(`section.tab.gen[data-tab="${activeTab}"] .col.side`);
+  const home = side || document.body;
+  if (bar.parentElement !== home) home.append(bar);
+}
+wide.addEventListener("change", placeGenbar);
+
+// ---------- boot ----------
+function selectTab(tab) {
+  activeTab = tab; store.set("tab", tab);
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll("section.tab").forEach((s) => s.classList.toggle("active", s.dataset.tab === tab));
+  document.body.classList.toggle("nogen", !templates[tab]);
+  placeGenbar();
+  if (tab === "gallery") loadGallery(true);
+  if (tab === "favs") readUser(FAVS_URL, null).then((f) => { if (Array.isArray(f)) { favs = f; renderFavs(); } });
+}
+
+async function boot() {
+  try {
+    [templates, presets, favs] = await Promise.all([
+      fetch("/mobile/templates").then((r) => r.json()),
+      fetch("/object_info/SizePresetPicker").then((r) => r.json()).then((j) => j.SizePresetPicker?.input?.required?.preset?.[1]?.presets_meta ?? []).catch(() => []),
+      readUser(FAVS_URL, []),
+    ]);
+    if (!Array.isArray(favs)) favs = [];
+  } catch (e) { $("#main").innerHTML = `<div class="warnbox">Could not reach ComfyUI (${esc(e.message)}).</div>`; return; }
+  const main = $("#main"); main.innerHTML = "";
+  const tabs = [["t2i", buildT2I], ["depth", buildDepth]].filter(([k]) => templates[k]);
+  if (!tabs.length) {
+    main.innerHTML = `<div class="warnbox">No sections yet. On the PC, open the <b>Comfy Remote</b> workflow in ComfyUI and choose <b>Extensions → Comfy Remote → Send sections to Comfy Remote</b>, then reload this page.</div>`;
+    $("#genBtn").disabled = true; return;
+  }
+  const extra = [["gallery", "Gallery", buildGallery], ["favs", "Favs", buildFavs]];
+  for (const [k, label, build] of [...tabs.map(([k, build]) => [k, templates[k].label || k, () => build(templates[k])]), ...extra]) {
+    const b = el(`<button type="button" data-tab="${k}">${esc(label)}</button>`);
+    b.onclick = () => selectTab(k);
+    $("#tabs").append(b);
+    main.append(build());
+  }
+  renderFavs();
+  selectTab(templates[activeTab] || extra.some(([k]) => k === activeTab) ? activeTab : tabs[0][0]);
+  for (const r of savedJobs()) if (r.prompt) addJob(r.tab, r.id, r.prompt, r.seed, r.started, true, r.typed);
+  connect();
+}
+boot();
+</script>
+</body>
+</html>
