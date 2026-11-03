@@ -1,3 +1,4 @@
 * text=auto eol=lf
-*.bat text eol=crlf
+# stored with CRLF in the repo so the raw download link works as a Windows batch file
+*.bat -text
 *.png binary
