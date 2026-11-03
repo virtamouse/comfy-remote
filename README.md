@@ -26,7 +26,7 @@ It ships with a ready-to-go **MOSS Image Turbo** workflow (8-step) with two mode
 3. Double-click it. It:
    - installs the node packs the workflow needs (rgthree-comfy, ComfyUI-KJNodes, comfyui_controlnet_aux) and their Python packages, without touching your torch install,
    - adds the **Comfy Remote - MOSS Turbo** workflow to ComfyUI's workflow list,
-   - checks for the models, including folders listed in `extra_model_paths.yaml`, and offers to download what's missing (about 17 GB if you have none),
+   - checks for the models, including folders listed in `extra_model_paths.yaml`, and offers to download what's missing (about 16 GB if you have none),
    - adds two launchers: `run_comfy_remote_LAN.bat` and `run_comfy_remote_TAILSCALE.bat`.
 
 Run it again any time: it only adds what's missing. Add `/update` to also update the node packs. Git is used if you have it; otherwise everything is downloaded as zip files.

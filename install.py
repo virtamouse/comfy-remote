@@ -67,7 +67,11 @@ def ask(question, default=True):
         return default
     hint = "Y/n" if default else "y/N"
     while True:
-        a = input(f"{question} [{hint}] ").strip().lower()
+        try:
+            a = input(f"{question} [{hint}] ").strip().lower()
+        except EOFError:  # no keyboard (run from a script)
+            say()
+            return default
         if not a:
             return default
         if a in ("y", "yes"):
