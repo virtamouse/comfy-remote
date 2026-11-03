@@ -40,7 +40,7 @@ It ships with a ready-to-go **MOSS Image Turbo** workflow (8-step) with two mode
 ## Install (Windows, ComfyUI portable)
 
 1. Have [ComfyUI Windows portable](https://github.com/comfyanonymous/ComfyUI/releases), **up to date** (run `update\update_comfyui.bat`). MOSS Image needs a recent ComfyUI.
-2. Download **[Install-ComfyRemote.bat](https://github.com/shyt47/comfy-remote/raw/main/Install-ComfyRemote.bat)** into your `ComfyUI_windows_portable` folder, next to `run_nvidia_gpu.bat`.
+2. Download **[Install-ComfyRemote.bat](https://github.com/virtamouse/comfy-remote/raw/main/Install-ComfyRemote.bat)** into your `ComfyUI_windows_portable` folder, next to `run_nvidia_gpu.bat`.
 3. Double-click it. It:
    - installs the node packs the workflow needs (rgthree-comfy, ComfyUI-KJNodes, comfyui_controlnet_aux) and their Python packages, without touching your torch install,
    - adds the **Comfy Remote - MOSS Turbo** workflow to ComfyUI's workflow list,

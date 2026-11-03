@@ -8,7 +8,7 @@ rem  Put this file in your ComfyUI_windows_portable folder (next to run_nvidia_g
 rem  and double-click it. Safe to run again: it only adds what is missing.
 rem  Options: /yes  /update  /skip-models  /dry-run
 rem ----------------------------------------------------------------
-set "REPO=https://github.com/shyt47/comfy-remote"
+set "REPO=https://github.com/virtamouse/comfy-remote"
 set "BRANCH=main"
 
 rem Find ComfyUI portable: this folder, or up to three folders above (when run from inside the package).
