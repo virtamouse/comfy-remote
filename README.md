@@ -2,6 +2,16 @@
 
 A clean, fast frontend for ComfyUI that works on your **phone** and your **PC**. Type a prompt, tap Generate, and swipe through the results, without touching the node graph. It runs alongside normal ComfyUI, so you can switch between the two any time.
 
+![Comfy Remote on a PC: settings on the left, results on the right](docs/screenshots/pc-text-to-image.jpg)
+
+<p align="center">
+  <img src="docs/screenshots/phone-text-to-image.jpg" width="19%" alt="Text to Image on a phone">
+  <img src="docs/screenshots/phone-results.jpg" width="19%" alt="Results of a batch of 4">
+  <img src="docs/screenshots/phone-viewer.jpg" width="19%" alt="Swiping through a batch in the viewer">
+  <img src="docs/screenshots/phone-depth.jpg" width="19%" alt="Depth mode with auto-describe">
+  <img src="docs/screenshots/phone-gallery.jpg" width="19%" alt="Gallery">
+</p>
+
 It ships with a ready-to-go **MOSS Image Turbo** workflow (8-step) with two modes:
 
 - **Text to Image**: prompt, negative prompt, size presets, batch size, LoRAs, seed.
@@ -18,6 +28,14 @@ It ships with a ready-to-go **MOSS Image Turbo** workflow (8-step) with two mode
 - **Use any result as the Depth input** in one tap.
 - **Pick input images** from the PC's folders, ComfyUI's input/output folders, or upload from the phone.
 - **LoRA card**: switch LoRAs on and off, change strengths, add any LoRA from your loras folder.
+
+<p align="center">
+  <img src="docs/screenshots/pc-viewer.jpg" width="49%" alt="Image viewer on a PC with the prompt and actions">
+  <img src="docs/screenshots/pc-gallery.jpg" width="49%" alt="Gallery on a PC">
+</p>
+<p align="center">
+  <img src="docs/screenshots/phone-favs.jpg" width="24%" alt="Favs with saved prompts">
+</p>
 
 ## Install (Windows, ComfyUI portable)
 
