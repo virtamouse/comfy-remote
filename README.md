@@ -26,7 +26,7 @@ It ships with a ready-to-go **MOSS Image Turbo** workflow (8-step) with two mode
 - **Swipe** (phone) or **←/→** (PC) through a batch, the gallery or your favs.
 - **Copy a prompt**, or send it straight to Text to Image, from any result.
 - **Use any result as the Depth input** in one tap.
-- **Pick input images** from the PC's folders, ComfyUI's input/output folders, or upload from the phone.
+- **Pick input images** from the PC's folders, ComfyUI's input/output folders, or upload from the phone. On a PC, paste one with **Ctrl+V** or drag it onto the Depth tab.
 - **LoRA card**: switch LoRAs on and off, change strengths, add any LoRA from your loras folder.
 
 <p align="center">

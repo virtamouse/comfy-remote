@@ -65,6 +65,9 @@ details > summary { cursor: pointer; color: var(--muted); font-size: 13px; paddi
 .picked { display: flex; gap: 12px; align-items: center; }
 .picked img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; background: var(--panel-2); flex: none; }
 .picked .name { font-size: 13px; word-break: break-all; color: var(--muted); }
+.card.drop { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.pastehint { display: none; }
+@media (hover: hover) and (pointer: fine) { .pastehint { display: block; } }
 .genbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: rgba(22,22,22,.94); border-top: 1px solid var(--line); backdrop-filter: blur(8px); }
 .genbar .genrow { display: flex; gap: 8px; max-width: 720px; margin: 0 auto; }
 .genbar .genrow > .btn { flex: 1; padding: 14px; font-size: 16px; }
@@ -429,6 +432,17 @@ function buildDepth(tpl) {
   showPicked();
   setDepthImage = (it) => { st.image = it; save("depth"); showPicked(); };
   img.querySelector("button").onclick = () => openPicker(setDepthImage);
+  // PC: drop an image file on this card (Ctrl+V paste is handled page-wide).
+  img.append(el(`<div class="hint pastehint">Or press Ctrl+V to paste an image, or drop one here.</div>`));
+  const isFile = (e) => [...e.dataTransfer.types].includes("Files");
+  img.ondragover = (e) => { if (!isFile(e)) return; e.preventDefault(); img.classList.add("drop"); };
+  img.ondragleave = (e) => { if (!img.contains(e.relatedTarget)) img.classList.remove("drop"); };
+  img.ondrop = (e) => {
+    img.classList.remove("drop");
+    const f = [...e.dataTransfer.files].find((f) => f.type.startsWith("image/"));
+    if (!f) return;
+    e.preventDefault(); useFileAsDepth(f);
+  };
   sec.append(img);
 
   const pc = el(`<div class="card"><h2>Prompt</h2></div>`);
@@ -535,15 +549,38 @@ $("#srcSeg").onclick = (e) => {
   const b = e.target.closest("button"); if (!b) return;
   pickSrc = b.dataset.src; [...$("#srcSeg").children].forEach((x) => x.classList.toggle("active", x === b)); loadPick(true);
 };
+// Uploads into input/mobile; returns the picked-image object, or null on failure.
+async function uploadImage(f, name) {
+  const fd = new FormData(); fd.append("image", f, name || f.name); fd.append("type", "input"); fd.append("subfolder", "mobile");
+  const r = await fetch("/upload/image", { method: "POST", body: fd }).catch(() => null);
+  if (!r || !r.ok) return null;
+  const j = await r.json();
+  return { filename: j.name, subfolder: j.subfolder || "", type: j.type || "input" };
+}
 $("#upload").onchange = async (e) => {
   const f = e.target.files[0]; if (!f) return;
-  const fd = new FormData(); fd.append("image", f); fd.append("type", "input"); fd.append("subfolder", "mobile");
-  const r = await fetch("/upload/image", { method: "POST", body: fd });
-  if (!r.ok) { alert("Upload failed"); return; }
-  const j = await r.json();
-  pickCb?.({ filename: j.name, subfolder: j.subfolder || "", type: j.type || "input" });
+  const it = await uploadImage(f);
+  if (!it) { alert("Upload failed"); return; }
+  pickCb?.(it);
   e.target.value = ""; closePicker();
 };
+// Pasted screenshots are all called "image.png", so give them a unique name.
+async function useFileAsDepth(f, pasted) {
+  if (!setDepthImage) return;
+  const ext = (f.type.split("/")[1] || "png").replace("jpeg", "jpg");
+  toast("Uploading image…");
+  const it = await uploadImage(f, pasted ? `pasted_${Date.now()}.${ext}` : undefined);
+  if (!it) { toast("Upload failed"); return; }
+  setDepthImage(it);
+  if (activeTab !== "depth") selectTab("depth");
+  toast("Depth input set");
+}
+document.addEventListener("paste", (e) => {
+  if (activeTab !== "depth" || !setDepthImage) return;
+  const f = [...(e.clipboardData?.files || [])].find((f) => f.type.startsWith("image/"));
+  if (!f) return;   // plain text pastes into the prompt as usual
+  e.preventDefault(); useFileAsDepth(f, true);
+});
 
 // ---------- small helpers ----------
 let setDepthImage = null;
